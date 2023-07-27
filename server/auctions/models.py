@@ -35,11 +35,31 @@ class Category(models.Model):
     )  # Category updated timestamp
 
     def __str__(self):
-        return f"{self.category.capitalize()}"
+        return f"{self.category}"
 
     # Returns the number of listings in the category
     def active_listing_count(self):
         return self.listings.filter(active=True).count()
+
+
+# Rating model
+class Rating(models.Model):
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="ratings"
+    )  # User who was rated
+    rating = models.IntegerField()  # Rating value
+    listing = models.ForeignKey(
+        "Listing", on_delete=models.CASCADE, related_name="ratings"
+    )  # Listing the rating was posted on
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )  # Rating created timestamp
+    updated_at = models.DateTimeField(
+        auto_now=True
+    )  # Rating updated timestamp
+
+    def __str__(self):
+        return f"{self.rating}"
 
 
 # Listing model
@@ -55,6 +75,12 @@ class Listing(models.Model):
     category = models.ForeignKey(
         Category, on_delete=models.CASCADE, related_name="listings"
     )  # Listing category
+    latitude = models.DecimalField(
+        max_digits=9, decimal_places=6, blank=True, null=True
+    )  # Listing latitude
+    longitude = models.DecimalField(
+        max_digits=9, decimal_places=6, blank=True, null=True
+    )  # Listing longitude
     created_at = models.DateTimeField(
         auto_now_add=True
     )  # Listing created timestamp
@@ -63,7 +89,7 @@ class Listing(models.Model):
     )  # Listing updated timestamp
 
     def __str__(self):
-        return f"{self.title.capitalize()}"
+        return f"{self.title}"
 
     # Returns the time ago the listing was posted
     def posted_time_ago(self):
@@ -110,6 +136,13 @@ class Listing(models.Model):
     # Returns the number of bids on the listing
     def bid_count(self):
         return self.bids.count()
+
+    def get_average_rating(self):
+        ratings = self.ratings.all()
+        if ratings:
+            return sum([rating.rating for rating in ratings]) / len(ratings)
+        else:
+            return 0
 
 
 # Bid model
