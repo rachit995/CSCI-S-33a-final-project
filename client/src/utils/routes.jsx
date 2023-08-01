@@ -8,9 +8,12 @@ import Login from '../components/Login.jsx';
 import Register from '../components/Register.jsx';
 import ErrorPage from '../components/ErrorPage.jsx';
 import { isAuthenticated } from './helper.js';
-import CreateListing from '../components/CreateListing.jsx';
+import AddEditListing from '../components/AddEditListing.jsx';
 import Listings from '../components/Listings.jsx';
-import ListingItem from '../components/ListingItem.jsx';
+import ListingDetail from '../components/ListingDetail.jsx';
+import Watchlist from '../components/Watchlist.jsx';
+import CategoryItem from '../components/CategoryItem.jsx';
+import CategoriesList from '../components/CategoriesList.jsx';
 
 function Protected({ children }) {
   if (!isAuthenticated()) {
@@ -41,23 +44,27 @@ export function Routes() {
     },
     {
       path: "/create-listing",
-      element: <Protected><CreateListing /></Protected>,
+      element: <Protected><AddEditListing /></Protected>,
     },
     {
       path: "/listing/:id",
-      element: <Protected><ListingItem /></Protected>,
+      element: <Protected><ListingDetail /></Protected>,
+    },
+    {
+      path: "/listing/:id/edit",
+      element: <Protected><AddEditListing mode="edit" /></Protected>,
     },
     {
       path: "/watchlist",
-      element: <Protected><Listings /></Protected>,
+      element: <Protected><Watchlist /></Protected>,
     },
     {
       path: "/category",
-      element: <Protected><Listings /></Protected>,
+      element: <Protected><CategoriesList /></Protected>,
     },
     {
       path: "/category/:id",
-      element: <Protected><Listings /></Protected>,
+      element: <Protected><CategoryItem /></Protected>,
     },
     {
       path: "/map-view",

@@ -21,4 +21,38 @@ urlpatterns = [
         name="ratings",
     ),
     path("categories", views.CategoryViewSet.as_view(), name="categories"),
+    path(
+        "categories/<int:pk>/listings",
+        views.CategoryListingViewSet.as_view(),
+        name="category_listings",
+    ),
+    path("me", views.UserViewSet.as_view(), name="me"),
+    path(
+        "listings/<int:pk>/watch",
+        views.WatchlistViewSet.as_view(),
+        name="watch",
+    ),
+    path(
+        "watchlist", views.WatchlistListingViewSet.as_view(), name="watchlist"
+    ),
+    path(
+        "ai/generate_description",
+        views.GenerateDescriptionViewSet.as_view(),
+        name="generate_description",
+    ),
+    path(
+        "listings/<int:pk>/comments",
+        views.CommentViewSet.as_view(),
+        name="comments",
+    ),
+    path(
+        "listings/<int:pk>/bids",
+        views.BidViewSet.as_view(),
+        name="bid",
+    ),
+    path(
+        "listings/<int:pk>/close",
+        views.CloseListingViewSet.as_view(),
+        name="close",
+    ),
 ]

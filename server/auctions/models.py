@@ -76,10 +76,10 @@ class Listing(models.Model):
         Category, on_delete=models.CASCADE, related_name="listings"
     )  # Listing category
     latitude = models.DecimalField(
-        max_digits=9, decimal_places=6, blank=True, null=True
+        max_digits=20, decimal_places=17, blank=True, null=True
     )  # Listing latitude
     longitude = models.DecimalField(
-        max_digits=9, decimal_places=6, blank=True, null=True
+        max_digits=20, decimal_places=17, blank=True, null=True
     )  # Listing longitude
     created_at = models.DateTimeField(
         auto_now_add=True
@@ -107,10 +107,6 @@ class Listing(models.Model):
         if highest_bid:
             highest_bid.winner = True
             highest_bid.save()
-
-    # Returns the comments on the listing in descending order
-    def get_comments(self):
-        return self.comments.order_by("-created_at")
 
     # Returns the number of comments on the listing
     def get_watchlist_count(self):
@@ -144,6 +140,9 @@ class Listing(models.Model):
         else:
             return 0
 
+    class Meta:
+        ordering = ["-created_at"]
+
 
 # Bid model
 class Bid(models.Model):
@@ -173,6 +172,13 @@ class Comment(models.Model):
     user = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name="comments"
     )  # User who posted the comment
+    parent = models.ForeignKey(
+        "self",
+        on_delete=models.CASCADE,
+        related_name="replies",
+        blank=True,
+        null=True,
+    )  # Parent comment
     created_at = models.DateTimeField(
         auto_now_add=True
     )  # Comment created timestamp
@@ -186,6 +192,9 @@ class Comment(models.Model):
     # Returns the time ago the comment was posted
     def posted_time_ago(self):
         return get_time_ago(self.created_at)
+
+    class Meta:
+        ordering = ["-created_at"]
 
 
 # Watchlist model
@@ -204,4 +213,4 @@ class Watchlist(models.Model):
     )  # Watchlist updated timestamp
 
     def __str__(self):
-        return f"{self.user}"
+        return f"{self.user} added {self.listing}({self.listing.id}) to their watchlist"

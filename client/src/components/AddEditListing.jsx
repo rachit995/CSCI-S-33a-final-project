@@ -1,67 +1,40 @@
-import { HiCamera, HiCheck, HiChevronDown, HiPlus, HiUserCircle } from "react-icons/hi"
-import Layout from "./Layout"
-import Input from "./html/Input"
-import { useForm } from "react-hook-form";
+import { HiCamera, HiCheck, HiChevronDown } from "react-icons/hi"
+import { ImMagicWand } from "react-icons/im"
 import { Fragment, useEffect, useRef, useState } from "react";
 import api from "../utils/api";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "../utils/helper";
 import clsx from "clsx";
 import 'mapbox-gl/dist/mapbox-gl.css';
 import mapboxgl from 'mapbox-gl'
 import { Float } from '@headlessui-float/react'
-import { Combobox, Menu } from '@headlessui/react'
+import { Combobox } from '@headlessui/react'
 import _, { set } from "lodash";
 
 
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN
-console.log(import.meta.env.VITE_MAPBOX_TOKEN)
-const CreateListing = () => {
+
+const AddEditListing = (props) => {
+  const { mode } = props
+  const { id } = useParams()
   const navigate = useNavigate();
   const [categories, setCategories] = useState([])
-  useEffect(() => {
-    api.get('/categories')
-      .then(res => {
-        setCategories(res.data)
-      })
-      .catch(err => {
-        console.log(err)
-      })
-  }, [])
+  const isEdit = mode === 'edit'
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [image, setImage] = useState('')
-  const [category, setCategory] = useState('')
+  const [category, setCategory] = useState({
+    id: '',
+    category: ''
+  })
   const [startingBid, setStartingBid] = useState('')
-  const [categoryError, setCategoryError] = useState(false)
   const [locationUpdated, setLocationUpdated] = useState(false)
-  const onSubmit = (e) => {
-    e.preventDefault()
-    if (category === '') {
-      setCategoryError(true)
-      return toast('error', 'Please select a category')
-    }
-    api.post('/listings', {
-      title,
-      description,
-      imageUrl: image,
-      category: category.id,
-      startingBid,
-      longitude: locationUpdated ? lng : null,
-      latitude: locationUpdated ? lat : null
-    }).then(res => {
-      if (res.status === 201) {
-        toast('success', 'Listing created successfully')
-        navigate('/listing')
-      }
-    }).catch(err => {
-      console.log(err)
-    })
-  };
-  const mapContainer = useRef(null);
-  const map = useRef(null);
   const [lng, setLng] = useState(-70.9);
   const [lat, setLat] = useState(42.35);
+
+  const mapContainer = useRef(null);
+  const map = useRef(null);
+  let marker = useRef(null);
 
   const handleDragEnd = () => {
     const marker = map.current.getCenter();
@@ -76,18 +49,99 @@ const CreateListing = () => {
       container: mapContainer.current,
       style: 'mapbox://styles/mapbox/streets-v12',
       center: [lng, lat],
-      zoom: 9
+      zoom: 4
     });
-    const marker = new mapboxgl.Marker({
+    marker.current = new mapboxgl.Marker({
       draggable: true
     })
       .setLngLat([lng, lat])
       .addTo(map.current);
-    marker.on('dragend', handleDragEnd);
-  });
+
+    marker.current.on('dragend', handleDragEnd);
+  }, [lng, lat]);
+
+  useEffect(() => {
+    api.get('/categories')
+      .then(res => {
+        setCategories(res.data)
+      })
+      .catch(err => {
+        console.log(err)
+      })
+    if (isEdit && id) {
+      api.get(`/listings/${id}`)
+        .then(res => {
+          const { title, description, imageUrl, category, startingBid, categoryName, isOwner, latitude, longitude } = res.data
+          if (!isOwner) {
+            navigate(`/listing/${id}`)
+          }
+          setTitle(title)
+          setDescription(description)
+          setImage(imageUrl)
+          setCategory({
+            id: category,
+            category: categoryName
+          })
+          setStartingBid(startingBid)
+          setLng(longitude)
+          setLat(latitude)
+          marker.current.setLngLat([longitude, latitude])
+          map.current.setCenter([longitude, latitude])
+        })
+    }
+  }, [])
+
+  useEffect(() => {
+    document.body.classList.add('bg-gray-100')
+    return () => {
+      document.body.classList.remove('bg-gray-100')
+    }
+  }, [])
+
+  const onSubmit = (e) => {
+    e.preventDefault()
+    if (category === '') {
+      return toast('error', 'Please select a category')
+    }
+    if (isEdit) {
+      api.put(`/listings/${id}`, {
+        title,
+        description,
+        imageUrl: image,
+        category: category.id,
+        startingBid,
+        longitude: locationUpdated ? lng : null,
+        latitude: locationUpdated ? lat : null
+      }).then(res => {
+        if (res.status === 201) {
+          toast('success', 'Listing updated successfully')
+          navigate('/listing')
+        }
+      }).catch(err => {
+        console.log(err)
+      })
+    } else {
+      api.post('/listings', {
+        title,
+        description,
+        imageUrl: image,
+        category: category.id,
+        startingBid,
+        longitude: locationUpdated ? lng : null,
+        latitude: locationUpdated ? lat : null
+      }).then(res => {
+        if (res.status === 201) {
+          toast('success', 'Listing created successfully')
+          navigate('/listing')
+        }
+      }).catch(err => {
+        console.log(err)
+      })
+    }
+
+  };
 
   const [query, setQuery] = useState('')
-
 
   useEffect(() => {
     if (!!category.category && !_.find(categories, { category: category.category })) {
@@ -114,18 +168,39 @@ const CreateListing = () => {
     setCategory(value)
     setQuery('')
   }
-  console.log({ category })
+
+  const [isGenerating, setIsGenerating] = useState(false)
+  function generateDescription(e) {
+    e.preventDefault()
+    setIsGenerating(true)
+    if (!title) {
+      return toast('error', 'Please enter some details in the title to generate description')
+    }
+    api.post('/ai/generate_description', { title })
+      .then(res => {
+        if (res.status === 200) {
+          setDescription(res.data.description)
+        }
+      })
+      .catch(err => {
+        console.log(err)
+      })
+      .finally(() => {
+        setIsGenerating(false)
+      })
+  }
+
   return (
     <div>
       <header className="bg-white shadow">
         <div className="px-4 py-6 mx-auto max-w-7xl sm:px-6 lg:px-8">
           <h1 className="text-3xl font-bold tracking-tight text-gray-900">
-            Create Listing
+            {isEdit ? 'Edit Listing' : 'Create Listing'}
           </h1>
         </div>
       </header>
       <div className="px-4 py-2 mx-auto max-w-7xl sm:px-6 sm:py-10 lg:px-8">
-        <div className="max-w-2xl mx-auto">
+        <div className="max-w-2xl px-10 pt-1 pb-8 mx-auto bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl">
           <form onSubmit={onSubmit}>
             <div className="space-y-12">
               <div className="pb-12 border-b border-gray-900/10">
@@ -141,38 +216,68 @@ const CreateListing = () => {
                           name="title"
                           id="title"
                           autoComplete="title"
-                          className="block w-full rounded-md border-0 py-1.5 text-gray-900  ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                          className="block w-full rounded-md border-0 py-1.5 text-gray-900  ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 disabled:bg-gray-100 disabled:pointer-events-none"
                           placeholder="Eg. 2019 MacBook Pro 16"
                           value={title}
                           onChange={(e) => setTitle(e.target.value)}
                           required
+                          disabled={isGenerating}
                         />
                       </div>
                     </div>
                   </div>
 
                   <div className="col-span-full">
-                    <label htmlFor="description" className="block text-sm font-medium leading-6 text-gray-900">
-                      Description
-                    </label>
+                    <div className="flex justify-between">
+                      <label htmlFor="description" className="block text-sm font-medium leading-6 text-gray-900">
+                        Description
+                      </label>
+                      <button
+                        type="button"
+                        className="rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 inline-flex items-center space-x-1 disabled:cursor-not-allowed disabled:opacity-50"
+                        onClick={generateDescription}
+                        disabled={isGenerating}
+                      >
+                        {
+                          isGenerating ? (
+                            <svg className="w-3 h-3 -ml-1 text-gray-900 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                            </svg>
+                          ) : (
+                            <ImMagicWand aria-hidden="true" />
+                          )
+                        }
+                        <span>
+                          {
+                            isGenerating ? 'Generating' : 'Generate'
+                          } Description
+                        </span>
+                      </button>
+                    </div>
                     <div className="mt-2">
                       <textarea
                         id="description"
                         name="description"
                         rows={3}
-                        className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                        className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 disabled:bg-gray-100 disabled:pointer-events-none"
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
                         required
+                        placeholder="Eg. 3 months old, no scratches, comes with charger and box"
+                        disabled={isGenerating}
                       />
                     </div>
                     <p className="mt-3 text-sm leading-6 text-gray-600">Write a few sentences about the listing.</p>
                   </div>
 
                   <div className="col-span-full">
-                    <label htmlFor="image" className="block text-sm font-medium leading-6 text-gray-900">
-                      Image
-                    </label>
+                    <div className="flex justify-between">
+                      <label htmlFor="image" className="block text-sm font-medium leading-6 text-gray-900">
+                        Image
+                      </label>
+                    </div>
+
                     <div className="mt-2">
                       <div className="flex rounded-md shadow-sm ring-1 ring-inset ring-gray-300 focus-within:ring-2 focus-within:ring-inset focus-within:ring-indigo-600">
                         <input
@@ -310,12 +415,13 @@ const CreateListing = () => {
                           type="number"
                           name="price"
                           id="price"
-                          className="block w-full rounded-md border-0 py-1.5 pl-7 pr-12 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                          className="block w-full rounded-md border-0 py-1.5 pl-7 pr-12 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 disabled:bg-gray-100 disabled:pointer-events-none"
                           placeholder="0.00"
                           aria-describedby="price-currency"
                           value={startingBid}
                           onChange={(e) => setStartingBid(e.target.value)}
                           required
+                          disabled={isEdit}
                         />
                         <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
                           <span className="text-gray-500 sm:text-sm" id="price-currency">
@@ -336,7 +442,7 @@ const CreateListing = () => {
                         </span>
                       </div>
                       <div className="relative mt-2 overflow-hidden rounded-md shadow-sm">
-                        <div ref={mapContainer} className="map-container h-[400px]" />
+                        <div ref={mapContainer} className="map-container h-[300px]" />
                       </div>
                     </div>
                   </div>
@@ -351,7 +457,7 @@ const CreateListing = () => {
                 type="submit"
                 className="px-3 py-2 text-sm font-semibold text-white bg-indigo-600 rounded-md shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
               >
-                Save
+                {isEdit ? 'Save' : 'Create'}
               </button>
             </div>
           </form>
@@ -361,4 +467,4 @@ const CreateListing = () => {
   )
 }
 
-export default CreateListing
+export default AddEditListing

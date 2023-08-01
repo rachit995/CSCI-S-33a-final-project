@@ -1,4 +1,4 @@
-import { Fragment } from 'react'
+import { Fragment, useEffect } from 'react'
 import { Disclosure, Menu, Transition } from '@headlessui/react'
 import clsx from 'clsx'
 import { HiX } from 'react-icons/hi'
@@ -9,6 +9,7 @@ import { isAuthenticated } from '../utils/helper'
 import { NavLink } from "react-router-dom";
 import { ToastContainer } from 'react-toastify';
 import "react-toastify/dist/ReactToastify.css";
+import api from '../utils/api'
 
 const user = {
   name: 'Tom Cook',
@@ -17,13 +18,27 @@ const user = {
 }
 
 
-const userNavigation = [
-  { name: 'Sign out', href: '#' },
-]
-
-
 const Layout = (props) => {
   const { children } = props
+  const token = localStorage.getItem('token')
+  useEffect(() => {
+    if (isAuthenticated()) {
+      if (!token) {
+        window.location.href = '/login'
+      }
+      api.get('/me')
+        .then(res => {
+          if (res.status === 200) {
+            localStorage.setItem('user', JSON.stringify(res.data))
+          }
+        }
+        )
+        .catch(err => {
+          console.log(err)
+        }
+        )
+    }
+  }, [token])
 
   const navigation = [
     { name: 'Login', href: '/login', current: false, visible: !isAuthenticated() },

@@ -16,16 +16,16 @@ def get_time_ago(time):
 
 
 # Filters listings based on the filter and query
-def filter_objects(request, listings, filter, query):
-    if filter == "active":
+def filter_objects(request, listings, listing_filter, query):
+    if listing_filter == "active":
         listings = listings.filter(active=True)
-    elif filter == "closed":
+    elif listing_filter == "closed":
         listings = listings.filter(active=False)
-    elif filter == "winner":
+    elif listing_filter == "winner":
         listings = listings.filter(bids__user=request.user, bids__winner=True)
-    elif filter == "my":
+    elif listing_filter == "my":
         listings = listings.filter(user=request.user)
-    elif filter == "watchlist":
+    elif listing_filter == "watchlist":
         listings = listings.filter(watchlists__user=request.user)
     else:
         listings = listings.all()
