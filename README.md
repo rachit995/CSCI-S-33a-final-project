@@ -15,7 +15,7 @@
 
 ### Overview
 
-Design an eBay-like e-commerce auction site that will allow users to post auction listings, place bids on listings, comment on those listings, and add listings to a watchlist and list the listing on a map.
+Bidster is an auction site where users can create listings for auctioning items. Users can bid on listings, comment on listings, add listings to their watchlist, rate listings and close listings. Users can also view listings on a map. The description can be generated using GPT-3. The description is generated using the title and category of the listing. The site is mobile responsive and works well on mobile devices.
 
 ### How to run
 
@@ -130,7 +130,7 @@ Users can view categories by clicking on the category link in the top navigation
 
 Users can view all categories by clicking on the all categories link in the top navigation bar. You can click on the category to view all listings in that category. It shows the number of active listings in each category.
 
-#### Models
+### Models Used
 
 - User
 - Listing
