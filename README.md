@@ -2,6 +2,10 @@
 
 ## Final Project: Bidster - Auction like a pro
 
+### GitHub Repository Link
+
+[View on GitHub](https://github.com/rachit995/CSCI-S-33a-final-project)
+
 ### Overview
 
 Design an eBay-like e-commerce auction site that will allow users to post auction listings, place bids on listings, comment on those listings, and add listings to a watchlist and list the listing on a map.
