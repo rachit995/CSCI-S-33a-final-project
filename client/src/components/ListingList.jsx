@@ -32,6 +32,7 @@ const ListingsList = (props) => {
     filterOptions: propFilterOptions,
   } = props
 
+  // show pagination page numbers
   function renderPages() {
     const currentPageIndex = page
     return _.range(1, numPages + 1)?.map((p, index) => {

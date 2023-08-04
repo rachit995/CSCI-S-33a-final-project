@@ -9,6 +9,7 @@ const Listings = () => {
   const [query, setQuery] = React.useState('')
   const [params, setParams] = React.useState({ page: 1, limit: 8 })
   const { page, limit } = params
+
   const fetcher = async () => {
     const response = await api.get('/listings', {
       params: {

@@ -3,8 +3,6 @@ import ReactDOM from 'react-dom/client'
 import './index.css'
 import {
   BrowserRouter as Router,
-  Route,
-  RouterProvider,
 } from "react-router-dom";
 import { Routes } from './utils/routes.jsx';
 import Layout from './components/Layout';

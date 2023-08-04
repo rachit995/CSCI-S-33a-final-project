@@ -44,23 +44,31 @@ const AddEditListing = (props) => {
     setLocationUpdated(true)
   }
 
+  // initialize map when component mounts
   useEffect(() => {
+    // if map already initialized, do nothing
     if (map.current) return;
+
+    // create map
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
       style: 'mapbox://styles/mapbox/streets-v12',
       center: [lng, lat],
       zoom: 4
     });
+
+    // marker in map
     marker.current = new mapboxgl.Marker({
       draggable: true
     })
       .setLngLat([lng, lat])
       .addTo(map.current);
 
+    // add event listener on dragend event
     marker.current.on('dragend', handleDragEnd);
   }, [lng, lat]);
 
+  // fetch categories
   useEffect(() => {
     api.get('/categories')
       .then(res => {
@@ -69,13 +77,16 @@ const AddEditListing = (props) => {
       .catch(err => {
         console.log(err)
       })
+    // if edit mode, fetch listing details
     if (isEdit && id) {
       api.get(`/listings/${id}`)
         .then(res => {
           const { title, description, imageUrl, category, startingBid, categoryName, isOwner, latitude, longitude } = res.data
+          // if not owner, redirect to listing detail page
           if (!isOwner) {
             navigate(`/listing/${id}`)
           }
+          // set form values
           setTitle(title)
           setDescription(description)
           setImage(imageUrl)
@@ -86,12 +97,14 @@ const AddEditListing = (props) => {
           setStartingBid(startingBid)
           setLng(longitude)
           setLat(latitude)
+          // set marker position
           marker.current.setLngLat([longitude, latitude])
           map.current.setCenter([longitude, latitude])
         })
     }
   }, [])
 
+  // set body background color
   useEffect(() => {
     document.body.classList.add('bg-gray-100')
     return () => {
@@ -99,11 +112,14 @@ const AddEditListing = (props) => {
     }
   }, [])
 
+  // form submit handler
   const onSubmit = (e) => {
     e.preventDefault()
+    // validation
     if (category.id === '') {
       return toast('error', 'Please select a category')
     }
+    // if edit mode, update listing
     if (isEdit) {
       api.put(`/listings/${id}`, {
         title,
@@ -122,6 +138,7 @@ const AddEditListing = (props) => {
         console.log(err)
       })
     } else {
+      // if create mode, create listing
       api.post('/listings', {
         title,
         description,
@@ -144,6 +161,7 @@ const AddEditListing = (props) => {
 
   const [query, setQuery] = useState('')
 
+  // create category if not exists
   useEffect(() => {
     if (!!category.category && !_.find(categories, { category: category.category })) {
       api.post('/categories', { category: category.category })
@@ -158,6 +176,7 @@ const AddEditListing = (props) => {
     }
   }, [category])
 
+  // filter categories
   const filteredOptions =
     query === ''
       ? categories
@@ -165,19 +184,24 @@ const AddEditListing = (props) => {
         option.category.toLowerCase().replace(/\s+/g, '').includes(query.toLowerCase().replace(/\s+/g, ''))
       )
 
+  // set category
   function handleSetCategory(value) {
     setCategory(value)
     setQuery('')
   }
 
   const [isGenerating, setIsGenerating] = useState(false)
+
+  // generate description using AI
   function generateDescription(e) {
     e.preventDefault()
     setIsGenerating(true)
+    // validation
     if (!title) {
       setIsGenerating(false)
       return toast('error', 'Please enter some details in the title to generate description')
     }
+    // call API
     api.post('/ai/generate_description', { title })
       .then(res => {
         if (res.status === 200) {

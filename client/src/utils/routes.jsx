@@ -22,8 +22,6 @@ function Protected({ children }) {
   return children
 }
 
-
-
 export function Routes() {
   const element = useRoutes([
     {

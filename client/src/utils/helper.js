@@ -1,14 +1,17 @@
 import { toast as rToast } from 'react-toastify';
 
+// isAuthenticated function will check if the user is logged in or not
 export function isAuthenticated() {
   return !!localStorage.getItem("token")
 }
 
+// getUserId function will return the user id if the user is logged in
 export function getUserId() {
   const user = localStorage.getItem("user")
   return user ? JSON.parse(user).id : null
 }
 
+// toast function will show a toast message
 export function toast(type, message) {
   return rToast[type](message, {
     position: "top-right",
