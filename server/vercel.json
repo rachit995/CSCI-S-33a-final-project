@@ -2,7 +2,7 @@
   "builds": [
     {
       "src": "bidster/wsgi.py",
-      "user": "@vercel/python"
+      "use": "@vercel/python"
     }
   ],
   "routes": [
