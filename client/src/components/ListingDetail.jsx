@@ -23,6 +23,8 @@ import mapboxgl from 'mapbox-gl'
 import Image from "rc-image";
 import PropTypes from 'prop-types'
 
+mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN
+
 const ListingDetail = () => {
   let { id } = useParams();
   const userId = getUserId();
@@ -246,7 +248,7 @@ const ListingDetail = () => {
                 {item?.title}
               </h1>
               <div>
-                <button
+                {!isOwner ? (<button
                   type="button"
                   className={clsx(
                     "flex items-center justify-center px-3 py-3 ml-4 text-gray-400 rounded-md hover:bg-gray-100 hover:text-gray-500",
@@ -262,7 +264,7 @@ const ListingDetail = () => {
                     aria-hidden="true"
                   />
                   <span className="sr-only">Add to watchlist</span>
-                </button>
+                </button>) : null}
               </div>
             </div>
 
@@ -276,7 +278,7 @@ const ListingDetail = () => {
               <h3 className="sr-only">Reviews</h3>
               <div
                 className={clsx({
-                  "pointer-events-none": item?.userRating,
+                  "pointer-events-none": item?.userRating || isOwner
                 })}
               >
                 <StarRating
@@ -488,21 +490,25 @@ const ListingDetail = () => {
             )}
           </div>
         </div>
-        {item.latitude && item.longitude ? (<div className="px-4">
-          <h2 className="mt-6 mb-2 text-2xl font-bold tracking-tight text-gray-900">
-            Location
-          </h2>
-          <p className="mb-4 text-sm text-gray-500">
-            {
-              isWinner
-                ? 'This is location is accurate. Contact the seller for pickup.'
-                : 'This is location is approximate. The actual location will be disclosed to the winner of the listing.'
-            }
-          </p>
+        <div className="px-4">
+          {item.latitude && item.longitude ? (
+            <>
+              <h2 className="mt-6 mb-2 text-2xl font-bold tracking-tight text-gray-900">
+                Location
+              </h2>
+              <p className="mb-4 text-sm text-gray-500">
+                {
+                  isWinner
+                    ? 'This is location is accurate. Contact the seller for pickup.'
+                    : 'This is location is approximate. The actual location will be disclosed to the winner of the listing.'
+                }
+              </p>
+            </>
+          ) : null}
           <div className="relative mt-2 overflow-hidden rounded-md shadow-sm">
-            <div ref={mapContainer} className="map-container h-[400px]" />
+            <div ref={mapContainer} className={clsx(item.latitude && item.longitude ? "h-[400px]" : "h-0")} />
           </div>
-        </div>) : null}
+        </div>
         <div className="px-4 my-10">
           <h2 className="mb-8 text-2xl font-bold tracking-tight text-gray-900">
             Comments {comments.length ? `(${comments.length})` : null}
@@ -521,7 +527,7 @@ const ListingDetail = () => {
             <div>
               <div className="">
                 {comments.map((comment, reviewIdx) => (
-                  <Comment key={comment.id} comment={comment} reviewIdx={reviewIdx} fetchComments={fetchComments} listingId={id} winnerId={item.winnerId} />
+                  <Comment key={comment.id} comment={comment} reviewIdx={reviewIdx} fetchComments={fetchComments} listingId={id} winnerId={item.winnerId} owner={item.user} />
                 ))}
               </div>
               {numPages > 1 && (
@@ -658,7 +664,7 @@ AddComment.propTypes = {
 
 
 function Comment(props) {
-  const { comment, reviewIdx, fetchComments, listingId, winnerId } = props
+  const { comment, reviewIdx, fetchComments, listingId, winnerId, owner } = props
   const [showNewReply, setShowNewReply] = useState(false)
 
   return (
@@ -689,6 +695,11 @@ function Comment(props) {
                 {winnerId === comment?.user ? (
                   <span className="items-center hidden px-2 py-1 text-xs font-medium text-green-700 rounded-md sm:inline-flex bg-green-50 ring-1 ring-inset ring-green-600/20">
                     Winner
+                  </span>
+                ) : null}
+                {owner === comment?.user ? (
+                  <span className="items-center hidden px-2 py-1 text-xs font-medium text-blue-700 rounded-md sm:inline-flex bg-blue-50 ring-1 ring-inset ring-blue-600/20">
+                    Owner
                   </span>
                 ) : null}
               </div>

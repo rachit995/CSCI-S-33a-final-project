@@ -1,4 +1,4 @@
-# CSCI-S-33a Frontend Final Project
+# CSCI-S-33a Final Project
 
 ## Final Project: Bidster - Auction like a pro
 
@@ -8,29 +8,14 @@ Design an eBay-like e-commerce auction site that will allow users to post auctio
 
 ### How to run
 
-#### Prerequisites:
+#### Frontend:
 
-1. To run this project, you will need to clone or download this repository.
+[Frontend README](client/README.md)
 
-2. Install the required packages in the package.json file:
-  ```bash
-  npm install
-  ```
-  or
-  ```bash
-  yarn install
-  ```
-#### Run frontend:
+#### Backend:
 
-To start the frontend, run the following command:
+[Backend README](server/README.md)
 
-```bash
-npm start
-```
-or
-```bash
-yarn start
-```
 
 Once the server is running, visit http://localhost:5173/ in your web browser to view the site.
 

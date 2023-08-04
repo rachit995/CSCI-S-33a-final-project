@@ -3,6 +3,8 @@ import api from '../utils/api'
 import useSwr from 'swr'
 import mapboxgl from 'mapbox-gl'
 
+mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN
+
 const MapView = () => {
   useEffect(() => {
     document.body.classList.add('bg-gray-100')
@@ -28,13 +30,16 @@ const MapView = () => {
     fetchNewData()
   }, [])
 
+  const mapContainer = useRef(null);
+  const map = useRef(null);
+
   useEffect(() => {
     if (map.current || !data.length) return;
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
       style: 'mapbox://styles/mapbox/streets-v12',
       center: [0, 0],
-      zoom: 4
+      zoom: 2
     });
 
     map.current.addControl(new mapboxgl.NavigationControl());
@@ -70,9 +75,6 @@ const MapView = () => {
     });
   }, [data]);
 
-  const mapContainer = useRef(null);
-  const map = useRef(null);
-
   return (
     <div>
       <header className="bg-white shadow">
@@ -83,9 +85,12 @@ const MapView = () => {
         </div>
       </header>
       <div className="px-4 py-2 mx-auto max-w-7xl sm:px-6 sm:py-10 lg:px-8">
-        <div className="max-w-4xl mx-auto overflow-hidden bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl">
-          <div ref={mapContainer} className="map-container h-[800px]" />
+        <div className="mx-auto overflow-hidden bg-white shadow-sm max-w-7xl ring-1 ring-gray-900/5 sm:rounded-xl">
+          <div ref={mapContainer} className="h-[800px]" />
         </div>
+        <p className="px-2 my-4 text-sm leading-6 text-center text-gray-600">
+          * These are the listings that are currently available on the map. Click on the marker to see more details. <strong>All the locations are approximate.</strong>
+        </p>
       </div>
     </div>
   )
