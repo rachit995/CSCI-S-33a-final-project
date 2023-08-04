@@ -1,12 +1,15 @@
 import { HiChevronLeft, HiChevronRight, HiDotsHorizontal, HiOutlineEye, HiPlus, HiSearch, HiStar } from 'react-icons/hi'
-import { FaRegFolderOpen } from 'react-icons/fa'
+import { FaAward, FaRegFolderOpen } from 'react-icons/fa'
 import _ from 'lodash'
 import LinesEllipsis from 'react-lines-ellipsis'
-import { getImgUrlSync } from '../utils/helper'
 import clsx from 'clsx'
 import PropTypes from 'prop-types'
 import { useEffect } from 'react'
 import { NumericFormat } from 'react-number-format'
+import Image from 'rc-image';
+import 'rc-image/assets/index.css';
+import { getUserId } from '../utils/helper'
+
 
 const ListingsList = (props) => {
   useEffect(() => {
@@ -15,6 +18,7 @@ const ListingsList = (props) => {
       document.body.classList.remove('bg-gray-100')
     }
   }, [])
+  const userId = getUserId()
   const {
     page,
     limit,
@@ -104,7 +108,13 @@ const ListingsList = (props) => {
                       },
                       {
                         name: 'My Listings', value: 'my'
-                      }
+                      },
+                      {
+                        name: 'My Winnings', value: 'winner'
+                      },
+                      {
+                        name: 'My Watchlist', value: 'watchlist'
+                      },
                     ].map((item) => (
                       <option key={item.value} value={item.value}>{item.name}</option>
                     ))}
@@ -139,19 +149,20 @@ const ListingsList = (props) => {
             <>
               <div className="grid grid-cols-1 gap-y-4 sm:grid-cols-2 sm:gap-x-6 sm:gap-y-10 lg:grid-cols-4 lg:gap-x-8">
                 {listings.map((listing) => {
-                  const image = getImgUrlSync(listing.imageUrl)
+                  const image = listing.imageUrl
                   return (
                     <div
                       key={listing.id}
                       className={clsx("relative flex flex-col overflow-hidden bg-white border border-gray-200 rounded-lg group", {
-                        'opacity-50': !listing.active
+                        'opacity-50': !listing.active && listing.winnerId !== userId
                       })}
                     >
-                      <div className="relative bg-gray-200 aspect-h-9 aspect-w-16 sm:aspect-none group-hover:opacity-75 sm:h-40">
-                        <img
+                      <div className="relative overflow-hidden bg-gray-200 aspect-h-9 aspect-w-16 sm:aspect-none group-hover:opacity-75 sm:h-40">
+                        <Image
                           src={image}
                           alt={listing.title}
-                          className="object-cover object-center w-full h-full sm:h-full sm:w-full"
+                          className="object-cover object-center w-full h-full sm:h-full sm:w-full cursor-zoom-in"
+                          fallback='https://placehold.co/600x350?text=Bidster'
                         />
                         {listing.rating ? (
                           <div className='absolute pl-1 pr-2 pt-0.5 pb-0 bg-white rounded shadow-sm top-2 left-2 text-sm'>
@@ -164,22 +175,31 @@ const ListingsList = (props) => {
                           </div>
                         ) : null}
                         {
-                          !listing.active ? (
-                            <div className='absolute top-2 right-2'>
-                              <span className="inline-flex items-center gap-x-1.5 rounded-md bg-red-100 px-2 py-1 text-xs font-medium text-red-700">
-                                <svg className="h-1.5 w-1.5 fill-red-500" viewBox="0 0 6 6" aria-hidden="true">
-                                  <circle cx={3} cy={3} r={3} />
-                                </svg>
-                                Closed
-                              </span>
-                            </div>
-                          ) : null
+                          !listing.active ?
+                            listing.winnerId === userId ? (
+                              <div className='absolute top-2 right-2'>
+                                <span className="inline-flex items-center gap-x-1.5 rounded-md bg-green-100 px-2 py-1 text-xs font-medium text-green-700">
+                                  <FaAward className="w-4 h-4 text-green-700" aria-hidden="true" />
+                                  Winner
+                                </span>
+                              </div>
+                            ) :
+                              (
+                                <div className='absolute top-2 right-2'>
+                                  <span className="inline-flex items-center gap-x-1.5 rounded-md bg-red-100 px-2 py-1 text-xs font-medium text-red-700">
+                                    <svg className="h-1.5 w-1.5 fill-red-500" viewBox="0 0 6 6" aria-hidden="true">
+                                      <circle cx={3} cy={3} r={3} />
+                                    </svg>
+                                    Closed
+                                  </span>
+                                </div>
+                              ) : null
                         }
                       </div>
                       <div className="flex flex-col flex-1 p-4 space-y-2">
                         <h3 className="inline-flex items-center justify-between w-full text-sm font-medium text-gray-900">
-                          <div className='inline-flex items-center space-x-2'>
-                            {listing.active ? (<div className="relative">
+                          <div className='inline-flex items-start space-x-2'>
+                            {listing.active ? (<div className="relative mt-[6px]">
                               <span className={clsx('flex place-items-center', 'w-2 h-2')}>
                                 <span
                                   className={clsx(

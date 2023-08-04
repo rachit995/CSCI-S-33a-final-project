@@ -14,6 +14,7 @@ import ListingDetail from '../components/ListingDetail.jsx';
 import Watchlist from '../components/Watchlist.jsx';
 import CategoryItem from '../components/CategoryItem.jsx';
 import CategoriesList from '../components/CategoriesList.jsx';
+import MapView from '../components/MapView.jsx';
 
 function Protected({ children }) {
   if (!isAuthenticated()) {
@@ -21,6 +22,7 @@ function Protected({ children }) {
   }
   return children
 }
+
 
 
 export function Routes() {
@@ -68,7 +70,7 @@ export function Routes() {
     },
     {
       path: "/map-view",
-      element: <Protected><Listings /></Protected>,
+      element: <Protected><MapView /></Protected>,
     },
     {
       path: "*",

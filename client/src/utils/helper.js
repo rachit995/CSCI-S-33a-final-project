@@ -32,5 +32,3 @@ export function getImgUrlSync(url) {
   }
   return "https://placehold.co/600x400?text=Bidster";
 }
-
-

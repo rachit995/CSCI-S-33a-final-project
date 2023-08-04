@@ -10,17 +10,13 @@ import { NavLink } from "react-router-dom";
 import { ToastContainer } from 'react-toastify';
 import "react-toastify/dist/ReactToastify.css";
 import api from '../utils/api'
-
-const user = {
-  name: 'Tom Cook',
-  email: 'tom@example.com',
-  imageUrl: avatar,
-}
+import PropTypes from 'prop-types'
 
 
 const Layout = (props) => {
   const { children } = props
   const token = localStorage.getItem('token')
+  const user = JSON.parse(localStorage.getItem('user')) || {}
   useEffect(() => {
     if (isAuthenticated()) {
       if (!token) {
@@ -64,6 +60,7 @@ const Layout = (props) => {
       }
     },
   ]
+  const displayName = user?.displayName || user?.email
   return (
     <>
       <ToastContainer />
@@ -96,14 +93,16 @@ const Layout = (props) => {
                       </div>
                     </div>
                   </div>
-                  <div className="hidden md:block">
+                  {isAuthenticated() ? (<div className="hidden md:block">
                     <div className="flex items-center ml-4 md:ml-6">
-                      {/* Profile dropdown */}
                       <Menu as="div" className="relative ml-3">
                         <div>
-                          <Menu.Button className="flex items-center max-w-xs text-sm bg-gray-800 rounded-full focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800">
+                          <Menu.Button className="flex items-center max-w-xs space-x-2 text-sm bg-gray-800 rounded-full focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800">
                             <span className="sr-only">Open user menu</span>
-                            <img className="w-8 h-8 rounded-full" src={user.imageUrl} alt="" />
+                            <span className="text-sm font-medium text-white">
+                              {displayName}
+                            </span>
+                            <img className="w-8 h-8 rounded-full" src={avatar} alt="" />
                           </Menu.Button>
                         </div>
                         <Transition
@@ -136,9 +135,8 @@ const Layout = (props) => {
                         </Transition>
                       </Menu>
                     </div>
-                  </div>
+                  </div>) : null}
                   <div className="flex -mr-2 md:hidden">
-                    {/* Mobile menu button */}
                     <Disclosure.Button className="inline-flex items-center justify-center p-2 text-gray-400 bg-gray-800 rounded-md hover:bg-gray-700 hover:text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800">
                       <span className="sr-only">Open main menu</span>
                       {open ? (
@@ -150,7 +148,6 @@ const Layout = (props) => {
                   </div>
                 </div>
               </div>
-
               <Disclosure.Panel className="md:hidden">
                 <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
                   {filteredNavigation.map((item) => (
@@ -168,13 +165,13 @@ const Layout = (props) => {
                     </Disclosure.Button>
                   ))}
                 </div>
-                <div className="pt-4 pb-3 border-t border-gray-700">
+                {isAuthenticated() ? (<div className="pt-4 pb-3 border-t border-gray-700">
                   <div className="flex items-center px-5">
                     <div className="flex-shrink-0">
                       <img className="w-10 h-10 rounded-full" src={avatar} alt="" />
                     </div>
-                    <div className="ml-3">
-                      <div className="text-base font-medium leading-none text-white">{user.name}</div>
+                    <div className="ml-3 space-y-1">
+                      <div className="text-base font-medium leading-none text-white">{displayName}</div>
                       <div className="text-sm font-medium leading-none text-gray-400">{user.email}</div>
                     </div>
                   </div>
@@ -191,7 +188,7 @@ const Layout = (props) => {
                       </Disclosure.Button>
                     ))}
                   </div>
-                </div>
+                </div>) : null}
               </Disclosure.Panel>
             </>
           )}
@@ -202,6 +199,14 @@ const Layout = (props) => {
       </div>
     </>
   )
+}
+
+Layout.defaultProps = {
+  children: null,
+}
+
+Layout.propTypes = {
+  children: PropTypes.node,
 }
 
 export default Layout

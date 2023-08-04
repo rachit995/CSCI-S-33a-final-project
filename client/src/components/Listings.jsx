@@ -20,7 +20,6 @@ const Listings = () => {
     })
     return response.data
   }
-
   const { data: {
     count,
     numPages,

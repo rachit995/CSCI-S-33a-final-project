@@ -1,4 +1,4 @@
-import { HiCamera, HiCheck, HiChevronDown } from "react-icons/hi"
+import { HiCamera, HiCheck, HiChevronDown, HiSearch } from "react-icons/hi"
 import { ImMagicWand } from "react-icons/im"
 import { Fragment, useEffect, useRef, useState } from "react";
 import api from "../utils/api";
@@ -9,7 +9,9 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 import mapboxgl from 'mapbox-gl'
 import { Float } from '@headlessui-float/react'
 import { Combobox } from '@headlessui/react'
-import _, { set } from "lodash";
+import _ from "lodash";
+import PropTypes from 'prop-types'
+import Image from "rc-image";
 
 
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN
@@ -100,7 +102,7 @@ const AddEditListing = (props) => {
 
   const onSubmit = (e) => {
     e.preventDefault()
-    if (category === '') {
+    if (category.id === '') {
       return toast('error', 'Please select a category')
     }
     if (isEdit) {
@@ -174,6 +176,7 @@ const AddEditListing = (props) => {
     e.preventDefault()
     setIsGenerating(true)
     if (!title) {
+      setIsGenerating(false)
       return toast('error', 'Please enter some details in the title to generate description')
     }
     api.post('/ai/generate_description', { title })
@@ -279,25 +282,39 @@ const AddEditListing = (props) => {
                     </div>
 
                     <div className="mt-2">
-                      <div className="flex rounded-md shadow-sm ring-1 ring-inset ring-gray-300 focus-within:ring-2 focus-within:ring-inset focus-within:ring-indigo-600">
+                      <div className="relative flex items-stretch flex-grow focus-within:z-10">
                         <input
                           type="text"
                           name="image"
                           id="image"
                           autoComplete="image"
-                          className="block w-full rounded-md border-0 py-1.5 text-gray-900  ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                          placeholder="Eg. https://example.com/image.jpg"
+                          className="block w-full rounded-none rounded-l-md border-0 py-1.5 pl-3 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                          placeholder="Paste image link here or type keywords to search for images"
                           value={image}
                           onChange={(e) => setImage(e.target.value)}
                           required
                         />
+                        <button
+                          type="button"
+                          className="relative -ml-px inline-flex items-center gap-x-1.5 rounded-r-md px-3 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                          onClick={() => {
+                            alert('Now the image will be opened in a new tab. You can copy the image link from there and paste it in the image field.')
+                            window.open(`https://source.unsplash.com/random/900x700/?${image}`, '_blank')
+                          }}
+                        >
+                          <HiSearch className="w-5 h-5 text-white-400" aria-hidden="true" />
+                        </button>
                       </div>
                     </div>
                   </div>
-
                   <div className="col-span-full">
                     {image ? (
-                      <img src={image} alt="" className="object-cover w-full h-64 rounded-md shadow-sm" />
+                      <Image
+                        src={image}
+                        alt={title}
+                        className="object-cover w-full h-64 rounded-md shadow-sm"
+                        fallback={`https://placehold.co/600x350?text=${title}`}
+                      />
                     ) : (
                       <div className="flex justify-center px-6 py-10 mt-2 border border-dashed rounded-lg border-gray-900/25">
                         <div className="text-center">
@@ -308,9 +325,7 @@ const AddEditListing = (props) => {
                         </div>
                       </div>
                     )}
-
                   </div>
-
                   <div className="sm:col-span-3">
                     <label htmlFor="country" className="block text-sm font-medium leading-6 text-gray-900">
                       Category
@@ -465,6 +480,14 @@ const AddEditListing = (props) => {
       </div>
     </div>
   )
+}
+
+AddEditListing.defaultProps = {
+  mode: 'create'
+}
+
+AddEditListing.propTypes = {
+  mode: PropTypes.oneOf(['create', 'edit'])
 }
 
 export default AddEditListing

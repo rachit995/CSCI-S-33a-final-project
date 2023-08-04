@@ -55,4 +55,9 @@ urlpatterns = [
         views.CloseListingViewSet.as_view(),
         name="close",
     ),
+    path(
+        "map_listings",
+        views.MapListingViewSet.as_view(),
+        name="map_listings",
+    ),
 ]

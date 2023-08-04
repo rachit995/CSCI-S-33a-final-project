@@ -1,5 +1,11 @@
 from rest_framework import serializers
 from .models import Listing, Category, Bid, Comment, Watchlist, User
+import decimal
+import random
+
+
+def get_map_coordinates_delta():
+    return decimal.Decimal(random.randrange(1, 300)) / 1000
 
 
 class ListingSerializer(serializers.ModelSerializer):
@@ -12,6 +18,9 @@ class ListingSerializer(serializers.ModelSerializer):
     total_bids = serializers.SerializerMethodField("get_total_bids")
     winner_id = serializers.SerializerMethodField("get_winner_id")
     winner_name = serializers.SerializerMethodField("get_winner_name")
+    latitude = serializers.SerializerMethodField("get_latitude")
+    longitude = serializers.SerializerMethodField("get_longitude")
+    username = serializers.SerializerMethodField("get_username")
 
     def get_average_rating(self, listing):
         return listing.get_average_rating()
@@ -56,8 +65,49 @@ class ListingSerializer(serializers.ModelSerializer):
     def get_winner_name(self, listing):
         winner = listing.winner()
         if winner:
-            return winner.user.username
+            return winner.user.get_display_name()
         return None
+
+    def get_latitude(self, listing):
+        try:
+            user = self.context["request"].user
+            accurate_latitude = listing.latitude
+            inaccurate_latitude = (
+                listing.latitude + get_map_coordinates_delta()
+            )
+            if user.is_authenticated:
+                winner = listing.winner()
+                owner = listing.user
+                if (winner and winner.user == user) or owner == user:
+                    return accurate_latitude
+                else:
+                    return inaccurate_latitude
+            else:
+                return inaccurate_latitude
+        except Exception as e:
+            return 0
+
+    def get_longitude(self, listing):
+        try:
+            user = self.context["request"].user
+            accurate_longitude = listing.longitude
+            inaccurate_longitude = (
+                listing.longitude + get_map_coordinates_delta()
+            )
+            if user.is_authenticated:
+                winner = listing.winner()
+                owner = listing.user
+                if (winner and winner.user == user) or owner == user:
+                    return accurate_longitude
+                else:
+                    return inaccurate_longitude
+            else:
+                return inaccurate_longitude
+        except Exception as e:
+            return 0
+
+    def get_username(self, listing):
+        return listing.user.get_display_name()
 
     class Meta:
         model = Listing
@@ -73,14 +123,70 @@ class ListingSerializer(serializers.ModelSerializer):
             "current_bid",
             "user_rating",
             "category_name",
-            "latitude",
-            "longitude",
             "is_watched",
             "active",
             "is_owner",
             "total_bids",
             "winner_id",
             "winner_name",
+            "latitude",
+            "longitude",
+            "created_at",
+            "username",
+        ]
+
+
+class ListingMapSerializer(serializers.ModelSerializer):
+    latitude = serializers.SerializerMethodField("get_latitude")
+    longitude = serializers.SerializerMethodField("get_longitude")
+
+    def get_latitude(self, listing):
+        try:
+            user = self.context["request"].user
+            accurate_latitude = listing.latitude
+            inaccurate_latitude = (
+                listing.latitude + get_map_coordinates_delta()
+            )
+            if user.is_authenticated:
+                winner = listing.winner()
+                owner = listing.user
+                if (winner and winner.user == user) or owner == user:
+                    return accurate_latitude
+                else:
+                    return inaccurate_latitude
+            else:
+                return inaccurate_latitude
+        except Exception as e:
+            return 0
+
+    def get_longitude(self, listing):
+        try:
+            user = self.context["request"].user
+            accurate_longitude = listing.longitude
+            inaccurate_longitude = (
+                listing.longitude + get_map_coordinates_delta()
+            )
+            if user.is_authenticated:
+                winner = listing.winner()
+                owner = listing.user
+                if (winner and winner.user == user) or owner == user:
+                    return accurate_longitude
+                else:
+                    return inaccurate_longitude
+            else:
+                return inaccurate_longitude
+        except Exception as e:
+            return 0
+
+    class Meta:
+        model = Listing
+        fields = [
+            "id",
+            "title",
+            "description",
+            "image_url",
+            "latitude",
+            "longitude",
         ]
 
 
@@ -98,13 +204,38 @@ class BidSerializer(serializers.ModelSerializer):
 
 class CommentSerializer(serializers.ModelSerializer):
     name = serializers.SerializerMethodField("get_name")
+    replies = serializers.SerializerMethodField("get_replies")
+    rating = serializers.SerializerMethodField("get_rating")
 
     def get_name(self, comment):
-        return comment.user.username
+        return comment.user.get_display_name()
+
+    def get_replies(self, comment):
+        return CommentSerializer(
+            comment.get_replies(), many=True, context=self.context
+        ).data
+
+    def get_rating(self, comment):
+        listing = comment.listing
+        user = comment.user
+        if user.is_authenticated:
+            rating = listing.ratings.filter(user=user)
+            if rating:
+                return rating[0].rating
+        return None
 
     class Meta:
         model = Comment
-        fields = ["comment", "listing", "user", "created_at", "name"]
+        fields = [
+            "id",
+            "comment",
+            "listing",
+            "user",
+            "created_at",
+            "name",
+            "replies",
+            "rating",
+        ]
 
 
 class WatchlistSerializer(serializers.ModelSerializer):

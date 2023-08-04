@@ -1,0 +1,14 @@
+{
+  "builds": [
+    {
+      "src": "bidster/wsgi.py",
+      "user": "@vercel/python"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/bidster/wsgi.py"
+    }
+  ]
+}

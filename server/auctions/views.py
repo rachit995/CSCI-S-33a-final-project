@@ -7,6 +7,7 @@ from .serializers import (
     BidSerializer,
     CommentSerializer,
     WatchlistSerializer,
+    ListingMapSerializer,
 )
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -175,9 +176,9 @@ class CommentViewSet(APIView):
 
     def get(self, request, pk):
         listing = Listing.objects.get(id=pk)
-        comments = Comment.objects.filter(listing=listing)
         page = request.query_params.get("page", 1)
-        limit = request.query_params.get("limit", 4)
+        limit = request.query_params.get("limit", 10)
+        comments = Comment.objects.filter(listing=listing, parent=None)
         paginator = Paginator(comments, limit)
         comments = paginator.page(page)
         serializer = CommentSerializer(
@@ -194,6 +195,11 @@ class CommentViewSet(APIView):
     def post(self, request, pk):
         listing = Listing.objects.get(id=pk)
         comment = request.data.get("comment")
+        parent_comment_id = request.data.get("parent_comment_id")
+        if parent_comment_id is not None:
+            parent = Comment.objects.get(id=parent_comment_id)
+        else:
+            parent = None
         user = request.user
         if comment is None:
             return Response(
@@ -204,6 +210,7 @@ class CommentViewSet(APIView):
             comment=comment,
             listing=listing,
             user=user,
+            parent=parent,
         )
         serializer = CommentSerializer(comment, context={"request": request})
         return Response(serializer.data, status=201)
@@ -257,6 +264,7 @@ class UserViewSet(APIView):
                 "first_name": user.first_name,
                 "last_name": user.last_name,
                 "id": user.id,
+                "display_name": user.get_display_name(),
             }
         )
 
@@ -344,7 +352,7 @@ class GenerateDescriptionViewSet(APIView):
                     "role": "user",
                     "content": "I want to sell a "
                     + title
-                    + ". What should I write in the description with in 100 words?",
+                    + ". What should I write in the description with in 50 words?",
                 }
             ],
         )
@@ -393,4 +401,15 @@ class CloseListingViewSet(APIView):
             )
         listing.close_listing()
         serializer = ListingSerializer(listing, context={"request": request})
+        return Response(serializer.data)
+
+
+class MapListingViewSet(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        listings = Listing.objects.filter(active=True)
+        serializer = ListingMapSerializer(
+            listings, many=True, context={"request": request}
+        )
         return Response(serializer.data)

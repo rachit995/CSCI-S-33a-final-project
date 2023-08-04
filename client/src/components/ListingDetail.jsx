@@ -1,7 +1,7 @@
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { useState } from "react";
 import clsx from "clsx";
-import { HiChevronLeft, HiChevronRight, HiHeart, HiPencil, HiStar } from "react-icons/hi";
+import { HiChevronLeft, HiChevronRight, HiHeart, HiOutlineEmojiSad, HiPencil, HiReply, HiX } from "react-icons/hi";
 import { PiGavel } from "react-icons/pi";
 import { FaAward } from "react-icons/fa";
 import { IoMdAlarm } from "react-icons/io";
@@ -9,7 +9,6 @@ import api from "../utils/api";
 import { useParams } from "react-router-dom";
 import StarRating from "react-star-ratings";
 import {
-  getImgUrlSync,
   getUserId,
   isAuthenticated,
   toast,
@@ -19,12 +18,16 @@ import useSwr from 'swr'
 import { NumericFormat } from 'react-number-format';
 import avatar from "../assets/default-avatar.png";
 import _ from "lodash";
+import 'mapbox-gl/dist/mapbox-gl.css';
+import mapboxgl from 'mapbox-gl'
+import Image from "rc-image";
+import PropTypes from 'prop-types'
 
 const ListingDetail = () => {
   let { id } = useParams();
   const userId = getUserId();
   const [bid, setBid] = useState(0);
-  const [params, setParams] = useState({ page: 1, limit: 3 })
+  const [params, setParams] = useState({ page: 1, limit: 10 })
   const { page, limit } = params
 
   const commentFetcher = async () => {
@@ -97,6 +100,7 @@ const ListingDetail = () => {
         .post(`/listings/${id}/ratings`, { rating: rate })
         .then(() => {
           fetchListing()
+          fetchComments()
           toast("success", "Rating added successfully");
         })
         .catch((err) => {
@@ -117,21 +121,7 @@ const ListingDetail = () => {
   };
 
   const isOwner = item.isOwner;
-  const [commentInput, setCommentInput] = useState("");
-
-  function commentFormSubmit(e) {
-    e.preventDefault();
-    api
-      .post(`/listings/${id}/comments`, { comment: commentInput })
-      .then(() => {
-        setCommentInput("");
-        fetchComments()
-        toast("success", "Comment added successfully");
-      })
-      .catch((err) => {
-        console.log(err);
-      });
-  }
+  const isWinner = item.winnerId === userId;
 
   function bidFormSubmit(e) {
     e.preventDefault();
@@ -158,7 +148,7 @@ const ListingDetail = () => {
         console.log(err);
       });
   }
-  const image = getImgUrlSync(item.imageUrl);
+  const image = item.imageUrl
 
   function renderPages() {
     const currentPageIndex = page
@@ -204,6 +194,25 @@ const ListingDetail = () => {
       return ''
     })
   }
+  const mapContainer = useRef(null);
+  const map = useRef(null);
+
+  const lng = item?.longitude
+  const lat = item?.latitude
+  useEffect(() => {
+    if (map.current || !lng || !lat) return;
+    map.current = new mapboxgl.Map({
+      container: mapContainer.current,
+      style: 'mapbox://styles/mapbox/streets-v12',
+      center: [lng, lat],
+      zoom: 4
+    });
+    new mapboxgl.Marker({
+      draggable: false
+    })
+      .setLngLat([lng, lat])
+      .addTo(map.current);
+  }, [lng, lat]);
 
   return (
     <div className="bg-white">
@@ -223,15 +232,16 @@ const ListingDetail = () => {
         <div className="lg:grid lg:grid-cols-2 lg:items-start lg:gap-x-8">
           <div className="flex flex-col-reverse">
             <div className="w-full aspect-h-1 aspect-w-1">
-              <img
+              <Image
                 src={image}
-                alt={item?.title}
+                alt={item.title}
                 className="object-cover object-center w-full h-full sm:rounded-lg"
+                fallback='https://placehold.co/600x350?text=Bidster'
               />
             </div>
           </div>
           <div className="px-4 mt-10 sm:mt-16 sm:px-0 lg:mt-0">
-            <div className="inline-flex items-center justify-between w-full">
+            <div className="inline-flex items-start justify-between w-full">
               <h1 className="text-3xl font-bold tracking-tight text-gray-900">
                 {item?.title}
               </h1>
@@ -280,7 +290,34 @@ const ListingDetail = () => {
                 />
               </div>
             </div>
-            <div className="mt-6">
+            <div className="flex mt-4 space-x-4 text-sm text-gray-500">
+              <div className="flex-none py-4">
+                <img
+                  src={avatar}
+                  alt=""
+                  className="w-10 h-10 bg-gray-100 rounded-full"
+                />
+              </div>
+              <div
+                className={clsx(
+                  "flex-1 pt-4"
+                )}
+              >
+                <div className="">
+                  <div>
+                    <h3 className="font-medium text-gray-900">
+                      {item.username}
+                    </h3>
+                    <p>
+                      <time dateTime={item.createdAt}>
+                        {moment(item.createdAt).fromNow()}
+                      </time>
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="mt-4">
               <h3 className="sr-only">Description</h3>
               <div
                 className="space-y-6 text-base text-gray-700"
@@ -322,35 +359,50 @@ const ListingDetail = () => {
                   </div>
                 ) : null}
                 {/* Check if the user is the owner of the listing and the listing is closed or the user is not the owner of the listing and the listing is closed */}
-                {(isOwner && !item?.active) || (!isOwner && !item?.active) ? (
-                  <div className="p-4 my-6 rounded-md bg-green-50">
-                    <div className="grid items-center sm:space-x-4 sm:flex">
-                      <div>
-                        <FaAward className="w-6 h-6 text-green-800" />
-                      </div>
-                      <div className="">
-                        <h3 className="text-sm font-medium text-green-800">
-                          This listing is closed.
-                        </h3>
-                        <div className="mt-1 text-sm text-green-700">
-                          {item?.winnerId ? (
-                            <p>
-                              The item is sold to{" "}<strong>
-                                {item?.winnerId === userId
-                                  ? "you"
-                                  : item?.winnerName}{" "}</strong>
-                              for <strong>
-                                <NumericFormat value={item?.currentBid} displayType={'text'} thousandSeparator={true} prefix={'$'} />
-                              </strong>.
-                            </p>
-                          ) : (
-                            <p>There is no winner for this listing.</p>
-                          )}
+                {(isOwner && !item?.active) || (!isOwner && !item?.active) ?
+                  item?.winnerId ?
+                    (
+                      <div className="p-4 my-6 rounded-md bg-green-50">
+                        <div className="grid items-center sm:space-x-4 sm:flex">
+                          <div>
+                            <FaAward className="w-6 h-6 text-green-800" />
+                          </div>
+                          <div className="">
+                            <h3 className="text-sm font-medium text-green-800">
+                              This listing is closed.
+                            </h3>
+                            <div className="mt-1 text-sm text-green-700">
+                              <p>
+                                The item is sold to{" "}<strong>
+                                  {item?.winnerId === userId
+                                    ? "you"
+                                    : item?.winnerName}{" "}</strong>
+                                for <strong>
+                                  <NumericFormat value={item?.currentBid} displayType={'text'} thousandSeparator={true} prefix={'$'} />
+                                </strong>.
+                              </p>
+                            </div>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </div>
-                ) : null}
+                    ) : (
+                      <div className="p-4 my-6 rounded-md bg-yellow-50">
+                        <div className="grid items-center sm:space-x-4 sm:flex">
+                          <div>
+                            <HiOutlineEmojiSad className="w-6 h-6 text-yellow-800" />
+                          </div>
+                          <div className="">
+                            <h3 className="text-sm font-medium text-yellow-800">
+                              This listing is closed.
+                            </h3>
+                            <div className="mt-1 text-sm text-yellow-700">
+                              <p>There is no winner for this listing.</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  : null}
                 {/* Check if the user is not the owner of the listing and the listing is active */}
                 {!isOwner && item?.active ? (
                   <form className="mt-6" onSubmit={bidFormSubmit}>
@@ -436,7 +488,22 @@ const ListingDetail = () => {
             )}
           </div>
         </div>
-        <div className="my-10">
+        {item.latitude && item.longitude ? (<div className="px-4">
+          <h2 className="mt-6 mb-2 text-2xl font-bold tracking-tight text-gray-900">
+            Location
+          </h2>
+          <p className="mb-4 text-sm text-gray-500">
+            {
+              isWinner
+                ? 'This is location is accurate. Contact the seller for pickup.'
+                : 'This is location is approximate. The actual location will be disclosed to the winner of the listing.'
+            }
+          </p>
+          <div className="relative mt-2 overflow-hidden rounded-md shadow-sm">
+            <div ref={mapContainer} className="map-container h-[400px]" />
+          </div>
+        </div>) : null}
+        <div className="px-4 my-10">
           <h2 className="mb-8 text-2xl font-bold tracking-tight text-gray-900">
             Comments {comments.length ? `(${comments.length})` : null}
           </h2>
@@ -448,75 +515,13 @@ const ListingDetail = () => {
                 alt=""
               />
             </div>
-            <div className="flex-1 min-w-0">
-              <form className="relative" onSubmit={commentFormSubmit}>
-                <div className="overflow-hidden rounded-lg shadow-sm ring-1 ring-inset ring-gray-300 focus-within:ring-2 focus-within:ring-indigo-600">
-                  <label htmlFor="comment" className="sr-only">
-                    Add your comment
-                  </label>
-                  <textarea
-                    rows={3}
-                    name="comment"
-                    id="comment"
-                    className="block w-full resize-none border-0 bg-transparent py-1.5 text-gray-900 placeholder:text-gray-400 focus:ring-0 sm:text-sm sm:leading-6"
-                    placeholder="Add your comment..."
-                    value={commentInput}
-                    onChange={(e) => setCommentInput(e.target.value)}
-                  />
-                  <div className="py-2" aria-hidden="true">
-                    <div className="py-px">
-                      <div className="h-9" />
-                    </div>
-                  </div>
-                </div>
-                <div className="absolute inset-x-0 bottom-0 flex justify-between py-2 pl-3 pr-2">
-                  <div className="flex-shrink-0">
-                    <button
-                      type="submit"
-                      className="inline-flex items-center px-3 py-2 text-sm font-semibold text-white bg-indigo-600 rounded-md shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                    >
-                      Post
-                    </button>
-                  </div>
-                </div>
-              </form>
-            </div>
+            <AddComment listingId={id} fetchComments={fetchComments} />
           </div>
           <div className="bg-white">
             <div>
-              <div className="-my-10">
+              <div className="">
                 {comments.map((comment, reviewIdx) => (
-                  <div
-                    key={comment.id}
-                    className="flex space-x-4 text-sm text-gray-500"
-                  >
-                    <div className="flex-none py-10">
-                      <img
-                        src={avatar}
-                        alt=""
-                        className="w-10 h-10 bg-gray-100 rounded-full"
-                      />
-                    </div>
-                    <div
-                      className={clsx(
-                        reviewIdx === 0 ? "" : "border-t border-gray-200",
-                        "flex-1 py-10"
-                      )}
-                    >
-                      <h3 className="font-medium text-gray-900">
-                        {comment.name}
-                      </h3>
-                      <p>
-                        <time dateTime={comment.createdAt}>
-                          {moment(comment.createdAt).fromNow()}
-                        </time>
-                      </p>
-                      <div
-                        className="mt-4 prose-sm prose text-gray-500 max-w-none"
-                        dangerouslySetInnerHTML={{ __html: comment.comment }}
-                      />
-                    </div>
-                  </div>
+                  <Comment key={comment.id} comment={comment} reviewIdx={reviewIdx} fetchComments={fetchComments} listingId={id} winnerId={item.winnerId} />
                 ))}
               </div>
               {numPages > 1 && (
@@ -581,5 +586,206 @@ const ListingDetail = () => {
     </div>
   );
 };
+
+function AddComment(props) {
+  const { listingId, fetchComments, parentCommentId = null, callback = null } = props
+  const [commentInput, setCommentInput] = useState("");
+  function commentFormSubmit(e) {
+    e.preventDefault();
+    api
+      .post(`/listings/${listingId}/comments`, {
+        comment: commentInput,
+        parentCommentId
+      })
+      .then(() => {
+        setCommentInput("");
+        fetchComments()
+        toast("success", "Comment added successfully");
+        if (callback) {
+          callback()
+        }
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  }
+  return (
+    <div className="flex-1 min-w-0">
+      <form className="relative" onSubmit={commentFormSubmit}>
+        <div className="overflow-hidden rounded-lg shadow-sm ring-1 ring-inset ring-gray-300 focus-within:ring-2 focus-within:ring-indigo-600">
+          <label htmlFor="comment" className="sr-only">
+            Add your comment
+          </label>
+          <textarea
+            rows={3}
+            name="comment"
+            id="comment"
+            className="block w-full resize-none border-0 bg-transparent py-1.5 text-gray-900 placeholder:text-gray-400 focus:ring-0 sm:text-sm sm:leading-6"
+            placeholder="Add your comment..."
+            value={commentInput}
+            onChange={(e) => setCommentInput(e.target.value)}
+          />
+          <div className="py-2" aria-hidden="true">
+            <div className="py-px">
+              <div className="h-9" />
+            </div>
+          </div>
+        </div>
+        <div className="absolute inset-x-0 bottom-0 flex justify-between py-2 pl-3 pr-2">
+          <div className="flex-shrink-0">
+            <button
+              type="submit"
+              className="inline-flex items-center px-3 py-2 text-sm font-semibold text-white bg-indigo-600 rounded-md shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+            >
+              Post
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  )
+}
+
+AddComment.propTypes = {
+  listingId: PropTypes.oneOfType([
+    PropTypes.string,
+    PropTypes.number
+  ]).isRequired,
+  fetchComments: PropTypes.func.isRequired,
+  parentCommentId: PropTypes.number,
+  callback: PropTypes.func,
+}
+
+
+function Comment(props) {
+  const { comment, reviewIdx, fetchComments, listingId, winnerId } = props
+  const [showNewReply, setShowNewReply] = useState(false)
+
+  return (
+    <>
+      <div
+        key={comment.id}
+        className="flex space-x-4 text-sm text-gray-500"
+      >
+        <div className="flex-none py-4">
+          <img
+            src={avatar}
+            alt=""
+            className="w-10 h-10 bg-gray-100 rounded-full"
+          />
+        </div>
+        <div
+          className={clsx(
+            reviewIdx === 0 ? "" : "border-t border-gray-200",
+            "flex-1 pt-4"
+          )}
+        >
+          <div className="inline-flex items-center justify-between w-full">
+            <div>
+              <div className="inline-flex items-center space-x-2">
+                <h3 className="font-medium text-gray-900">
+                  {comment.name}
+                </h3>
+                {winnerId === comment?.user ? (
+                  <span className="items-center hidden px-2 py-1 text-xs font-medium text-green-700 rounded-md sm:inline-flex bg-green-50 ring-1 ring-inset ring-green-600/20">
+                    Winner
+                  </span>
+                ) : null}
+              </div>
+              <p>
+                <time dateTime={comment.createdAt}>
+                  {moment(comment.createdAt).fromNow()}
+                </time>
+              </p>
+            </div>
+            <div className="inline-flex items-center space-x-4">
+              {comment?.rating ? (
+                <div className="items-center hidden sm:flex">
+                  <StarRating
+                    name={comment?.name}
+                    rating={comment?.rating}
+                    starDimension="16px"
+                    starRatedColor="#FDCC0D"
+                    starHoverColor="#FDCC0D"
+                    starSpacing="2px"
+                  />
+                </div>
+              ) : null}
+              {
+                showNewReply ? (
+                  <button
+                    type="button"
+                    className="inline-flex items-center px-2 py-1 space-x-1 text-sm font-semibold text-red-600 rounded shadow-sm bg-red-50 hover:bg-red-100"
+                    onClick={() => setShowNewReply(!showNewReply)}
+                  >
+                    <HiX className="w-4 h-4" aria-hidden="true" />
+                    <span>
+                      Close
+                    </span>
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className="inline-flex items-center px-2 py-1 space-x-1 text-sm font-semibold text-indigo-600 rounded shadow-sm bg-indigo-50 hover:bg-indigo-100"
+                    onClick={() => setShowNewReply(!showNewReply)}
+                  >
+                    <HiReply className="w-4 h-4" aria-hidden="true" />
+                    <span>
+                      Reply
+                    </span>
+                  </button>
+                )
+              }
+            </div>
+          </div>
+          <div
+            className="py-4 prose-sm prose text-gray-500 max-w-none"
+            dangerouslySetInnerHTML={{ __html: comment.comment }}
+          />
+          {showNewReply ? (
+            <div className="my-4">
+              <AddComment
+                listingId={listingId}
+                fetchComments={fetchComments}
+                parentCommentId={comment.id}
+                callback={() => setShowNewReply(false)}
+              />
+            </div>
+          ) : null}
+          <div className="hidden sm:block">
+            {comment?.replies?.map((reply, replyIdx) => (
+              <div key={reply.id} className={clsx("pt-4", {
+                "border-t border-gray-200": replyIdx === 0
+              })}>
+                <Comment comment={reply} reviewIdx={replyIdx} fetchComments={fetchComments} listingId={listingId} winnerId={winnerId} />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+      <div className="flex-col sm:hidden">
+        {comment?.replies?.map((reply, replyIdx) => (
+          <div key={reply.id} className={clsx("pt-4", {
+            "border-t border-gray-200": replyIdx === 0
+          })}>
+            <Comment comment={reply} reviewIdx={replyIdx} fetchComments={fetchComments} listingId={listingId} winnerId={winnerId} />
+          </div>
+        ))}
+      </div>
+    </>
+  )
+}
+
+Comment.propTypes = {
+  comment: PropTypes.object.isRequired,
+  reviewIdx: PropTypes.number.isRequired,
+  fetchComments: PropTypes.func.isRequired,
+  listingId: PropTypes.oneOfType([
+    PropTypes.string,
+    PropTypes.number
+  ]).isRequired,
+  winnerId: PropTypes.number,
+}
+
 
 export default ListingDetail;

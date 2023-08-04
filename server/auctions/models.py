@@ -7,7 +7,7 @@ from .utils import get_time_ago
 
 # User model
 class User(AbstractUser):
-    def __str__(self):
+    def get_display_name(self):
         if self.first_name and self.last_name:
             return (
                 f"{self.first_name.capitalize()} {self.last_name.capitalize()}"
@@ -18,6 +18,9 @@ class User(AbstractUser):
             return f"{self.last_name.capitalize()}"
         else:
             return f"{self.username}"
+
+    def __str__(self):
+        return f"{self.username}"
 
     # Returns the number of active listings posted by the user
     def get_active_watchlist_count(self):
@@ -192,6 +195,9 @@ class Comment(models.Model):
     # Returns the time ago the comment was posted
     def posted_time_ago(self):
         return get_time_ago(self.created_at)
+
+    def get_replies(self):
+        return self.replies.all()
 
     class Meta:
         ordering = ["-created_at"]
