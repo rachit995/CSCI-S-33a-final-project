@@ -50,7 +50,13 @@ Users can logout of their account from the top navigation bar.
 
 #### 5. Create Listing
 
-Users can create a listing by providing a title, description, image, category, starting bid and location. There are validations on the frontend and backend to ensure that the starting bid is greater than 0. The category is selected from a dropdown menu (you can create new category from the dropdown itself) and the location is selected from a map. The map is powered by Mapbox. The location is stored as a latitude and longitude and is optional. You can search for image as well using Unsplash Source URL. The description can be generated using GPT-3. The description is generated using the title and category of the listing. The description is generated on the backend and is not stored in the database. After you create a listing, you are redirected to the active listings page.
+- Users can create a listing by providing a title, description, image, category, starting bid and location.
+- There are validations on the frontend and backend to ensure that the starting bid is greater than 0.
+- The category is selected from a dropdown menu (you can create new category from the dropdown itself) and the location is selected from a map.
+- The map is powered by Mapbox. The location is stored as a latitude and longitude and is optional.
+- You can search for image as well using Unsplash Source URL.
+- The description can be generated using GPT-3. The description is generated using the title and category of the listing. The description is generated on the backend and is not stored in the database.
+- After you create a listing, you are redirected to the active listings page.
 
 
 #### 6. Edit Listing
@@ -69,7 +75,13 @@ Users can place a bid on a listing. There are validations on the frontend and ba
 
 #### 9. Comment
 
-Users can comment on a listing. There are validations on the frontend and backend to ensure that the comment is not empty. After you comment on a listing, you are redirected to the listing detail page. If you are the winner or the owner of the listing, the comment is marked as a special comment. You can click on the name of the user who posted the comment to view their listings. There is pagination on the comments. You can view 10 comments at a time. You can click on the page numbers to view more comments.
+- Users can comment on a listing.
+- There are validations on the frontend and backend to ensure that the comment is not empty.
+- After you comment on a listing, you are redirected to the listing detail page.
+- If you are the winner or the owner of the listing, the comment is marked as a special comment.
+- You can click on the name of the user who posted the comment to view their listings.
+- There is pagination on the comments. You can view 10 comments at a time.
+- You can click on the page numbers to view more comments.
 
 #### 10. Add Comment Reply
 
