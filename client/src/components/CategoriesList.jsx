@@ -80,7 +80,7 @@ const CategoriesList = () => {
                 </span>
               </span>
               <HiFolder
-                className={clsx('h-5 w-5 text-indigo-600')}
+                className={clsx('h-8 w-8 text-yellow-400')}
                 aria-hidden="true"
               />
               <span

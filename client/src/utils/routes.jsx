@@ -1,6 +1,4 @@
-import App from '../App.jsx'
 import {
-  createBrowserRouter,
   Navigate,
   useRoutes,
 } from "react-router-dom";
@@ -15,6 +13,7 @@ import Watchlist from '../components/Watchlist.jsx';
 import CategoryItem from '../components/CategoryItem.jsx';
 import CategoriesList from '../components/CategoriesList.jsx';
 import MapView from '../components/MapView.jsx';
+import UserListingList from '../components/UserListingList.jsx';
 
 function Protected({ children }) {
   if (!isAuthenticated()) {
@@ -71,6 +70,10 @@ export function Routes() {
     {
       path: "/map-view",
       element: <Protected><MapView /></Protected>,
+    },
+    {
+      path: "/user/:id/listings",
+      element: <Protected><UserListingList /></Protected>,
     },
     {
       path: "*",

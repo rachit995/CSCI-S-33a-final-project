@@ -3,14 +3,16 @@ import api from '../utils/api'
 import { debounce } from 'lodash'
 import useSwr from 'swr'
 import ListingsList from './ListingList'
+import { useParams } from 'react-router-dom'
 
-const Watchlist = () => {
+const UserListingList = () => {
   const [filter, setFilter] = React.useState('active')
   const [query, setQuery] = React.useState('')
   const [params, setParams] = React.useState({ page: 1, limit: 8 })
   const { page, limit } = params
+  const { id } = useParams()
   const fetcher = async () => {
-    const response = await api.get('/watchlist', {
+    const response = await api.get(`/users/${id}/listings`, {
       params: {
         filter,
         query,
@@ -20,16 +22,17 @@ const Watchlist = () => {
     })
     return response.data
   }
-
   const { data: {
     count,
     numPages,
-    results: listings
+    results: listings,
+    user: displayName
   } = {
       count: 0,
       numPages: 0,
-      results: []
-    }, mutate } = useSwr(`/watchlist`, fetcher, {
+      results: [],
+      user: ''
+    }, mutate } = useSwr(`/user-listings`, fetcher, {
       refreshInterval: undefined,
     })
 
@@ -45,7 +48,7 @@ const Watchlist = () => {
     fetchNewData()
   }, [query, filter, page, limit])
 
-  let title = 'Watchlist'
+  let title = `${displayName}'s Listings`
 
   return (
     <ListingsList
@@ -59,9 +62,9 @@ const Watchlist = () => {
       handleSearchChange={handleSearchChange}
       filter={filter}
       setFilter={setFilter}
-      filterOptions={['all', 'active', 'closed', 'winner']}
+      filterOptions={['all', 'active', 'closed']}
     />
   )
 }
 
-export default Watchlist
+export default UserListingList

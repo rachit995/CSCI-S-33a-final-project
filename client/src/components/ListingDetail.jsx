@@ -3,7 +3,7 @@ import { useState } from "react";
 import clsx from "clsx";
 import { HiChevronLeft, HiChevronRight, HiHeart, HiOutlineEmojiSad, HiPencil, HiReply, HiX } from "react-icons/hi";
 import { PiGavel } from "react-icons/pi";
-import { FaAward } from "react-icons/fa";
+import { FaAward, FaRegFolderOpen } from "react-icons/fa";
 import { IoMdAlarm } from "react-icons/io";
 import api from "../utils/api";
 import { useParams } from "react-router-dom";
@@ -307,9 +307,9 @@ const ListingDetail = () => {
               >
                 <div className="">
                   <div>
-                    <h3 className="font-medium text-gray-900">
+                    <a className="font-medium text-gray-900" href={`/user/${item?.user}/listings`}>
                       {item.username}
-                    </h3>
+                    </a>
                     <p>
                       <time dateTime={item.createdAt}>
                         {moment(item.createdAt).fromNow()}
@@ -325,6 +325,14 @@ const ListingDetail = () => {
                 className="space-y-6 text-base text-gray-700"
                 dangerouslySetInnerHTML={{ __html: item?.description }}
               />
+            </div>
+            <div className='pt-4'>
+              <a className="inline-flex items-center gap-x-1.5 rounded-md bg-yellow-100 px-2 py-1 text-xs font-medium text-yellow-700 hover:bg-yellow-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-yellow-600"
+                href={`/category/${item.category}`}
+              >
+                <FaRegFolderOpen className="w-4 h-4 text-yellow-700" aria-hidden="true" />
+                {item.categoryName}
+              </a>
             </div>
             {isAuthenticated() ? (
               <>
@@ -407,7 +415,7 @@ const ListingDetail = () => {
                   : null}
                 {/* Check if the user is not the owner of the listing and the listing is active */}
                 {!isOwner && item?.active ? (
-                  <form className="mt-6" onSubmit={bidFormSubmit}>
+                  <form className="mt-4" onSubmit={bidFormSubmit}>
                     <div className="grid items-end w-full mt-10 sm:space-x-2 sm:flex ">
                       <div className="w-full">
                         <label
@@ -689,9 +697,9 @@ function Comment(props) {
           <div className="inline-flex items-center justify-between w-full">
             <div>
               <div className="inline-flex items-center space-x-2">
-                <h3 className="font-medium text-gray-900">
+                <a className="font-medium text-gray-900" href={`/user/${comment.user}/listings`}>
                   {comment.name}
-                </h3>
+                </a>
                 {winnerId === comment?.user ? (
                   <span className="items-center hidden px-2 py-1 text-xs font-medium text-green-700 rounded-md sm:inline-flex bg-green-50 ring-1 ring-inset ring-green-600/20">
                     Winner
@@ -768,7 +776,7 @@ function Comment(props) {
               <div key={reply.id} className={clsx("pt-4", {
                 "border-t border-gray-200": replyIdx === 0
               })}>
-                <Comment comment={reply} reviewIdx={replyIdx} fetchComments={fetchComments} listingId={listingId} winnerId={winnerId} />
+                <Comment comment={reply} reviewIdx={replyIdx} fetchComments={fetchComments} listingId={listingId} winnerId={winnerId} owner={owner} />
               </div>
             ))}
           </div>
@@ -779,7 +787,7 @@ function Comment(props) {
           <div key={reply.id} className={clsx("pt-4", {
             "border-t border-gray-200": replyIdx === 0
           })}>
-            <Comment comment={reply} reviewIdx={replyIdx} fetchComments={fetchComments} listingId={listingId} winnerId={winnerId} />
+            <Comment comment={reply} reviewIdx={replyIdx} fetchComments={fetchComments} listingId={listingId} winnerId={winnerId} owner={owner} />
           </div>
         ))}
       </div>

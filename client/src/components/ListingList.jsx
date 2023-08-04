@@ -10,7 +10,6 @@ import Image from 'rc-image';
 import 'rc-image/assets/index.css';
 import { getUserId } from '../utils/helper'
 
-
 const ListingsList = (props) => {
   useEffect(() => {
     document.body.classList.add('bg-gray-100')
@@ -29,7 +28,8 @@ const ListingsList = (props) => {
     listings,
     count,
     numPages,
-    handleSearchChange
+    handleSearchChange,
+    filterOptions: propFilterOptions,
   } = props
 
   function renderPages() {
@@ -77,6 +77,28 @@ const ListingsList = (props) => {
     })
   }
 
+  const filterOptions = [
+    {
+      name: 'All Listings', value: 'all'
+    },
+    {
+      name: 'Active Listings', value: 'active'
+    },
+    {
+      name: 'Closed Listings', value: 'closed'
+    },
+    {
+      name: 'My Listings', value: 'my'
+    },
+    {
+      name: 'My Winnings', value: 'winner'
+    },
+    {
+      name: 'My Watchlist', value: 'watchlist'
+    },
+  ]
+
+  const tempFilterOptions = filterOptions.filter((item) => { return propFilterOptions.includes(item.value) })
 
   return (
     <div>
@@ -96,26 +118,7 @@ const ListingsList = (props) => {
                     value={filter}
                     onChange={(e) => setFilter(e.target.value)}
                   >
-                    {[
-                      {
-                        name: 'All Listings', value: 'all'
-                      },
-                      {
-                        name: 'Active Listings', value: 'active'
-                      },
-                      {
-                        name: 'Closed Listings', value: 'closed'
-                      },
-                      {
-                        name: 'My Listings', value: 'my'
-                      },
-                      {
-                        name: 'My Winnings', value: 'winner'
-                      },
-                      {
-                        name: 'My Watchlist', value: 'watchlist'
-                      },
-                    ].map((item) => (
+                    {tempFilterOptions.map((item) => (
                       <option key={item.value} value={item.value}>{item.name}</option>
                     ))}
                   </select>
@@ -231,8 +234,8 @@ const ListingsList = (props) => {
                             {listing.categoryName}
                           </a>
                         </div>
-                        <hr className="border-gray-200" />
                         <div className="flex flex-col justify-end flex-1 py-4">
+                          <hr className="mb-4 border-gray-200" />
                           <p className="mb-2 text-xs text-gray-500">Current Bid</p>
                           <p className="text-4xl font-medium text-gray-900">
                             <NumericFormat value={listing?.currentBid} displayType={'text'} thousandSeparator={true} prefix={'$'} />
@@ -343,7 +346,8 @@ ListingsList.defaultProps = {
   query: '',
   setQuery: () => { },
   setParams: () => { },
-  handleSearchChange: () => { }
+  handleSearchChange: () => { },
+  filterOptions: ['all', 'active', 'closed', 'my', 'winner', 'watchlist']
 }
 
 ListingsList.propTypes = {
@@ -358,7 +362,8 @@ ListingsList.propTypes = {
   query: PropTypes.string,
   setQuery: PropTypes.func,
   setParams: PropTypes.func,
-  handleSearchChange: PropTypes.func
+  handleSearchChange: PropTypes.func,
+  filterOptions: PropTypes.array
 }
 
 

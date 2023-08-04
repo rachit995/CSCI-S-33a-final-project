@@ -1,10 +1,35 @@
-# CSCI-S-33a Backend Final Project
-
-## Final Project: Bidster - Auction like a pro
+# Backend Server
 
 ### Overview
 
-Design an eBay-like e-commerce auction site that will allow users to post auction listings, place bids on listings, comment on those listings, and add listings to a watchlist and list the listing on a map.
+The backend is based on Django and Django Rest Framework.
+
+### Structure
+
+The project is structured as follows:
+
+```bash
+.
+├── README.md
+├── auctions
+│   ├── admin.py
+│   ├── apps.py
+│   ├── models.py
+│   ├── serializers.py
+│   ├── tests.py
+│   ├── urls.py
+│   ├── utils.py
+│   └── views.py
+├── bidster
+│   ├── asgi.py
+│   ├── settings.py
+│   ├── urls.py
+│   └── wsgi.py
+├── manage.py
+├── requirements.txt
+└── vercel.json
+```
+
 
 ### How to run
 

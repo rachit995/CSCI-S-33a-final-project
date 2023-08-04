@@ -63,4 +63,9 @@ urlpatterns = [
         views.MapListingViewSet.as_view(),
         name="map_listings",
     ),  # endpoint for map listings
+    path(
+        "users/<int:pk>/listings",
+        views.UserListingViewSet.as_view(),
+        name="user_listings",
+    ),  # endpoint for user listings
 ]

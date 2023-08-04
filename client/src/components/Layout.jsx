@@ -11,6 +11,7 @@ import { ToastContainer } from 'react-toastify';
 import "react-toastify/dist/ReactToastify.css";
 import api from '../utils/api'
 import PropTypes from 'prop-types'
+import moment from 'moment'
 
 
 const Layout = (props) => {
@@ -27,12 +28,12 @@ const Layout = (props) => {
           if (res.status === 200) {
             localStorage.setItem('user', JSON.stringify(res.data))
           }
-        }
-        )
+        })
         .catch(err => {
           console.log(err)
-        }
-        )
+          localStorage.clear()
+          window.location.href = '/login'
+        })
     }
   }, [token])
 
@@ -56,6 +57,8 @@ const Layout = (props) => {
       name: 'Sign out', onClick: (e) => {
         e.preventDefault()
         localStorage.removeItem('token')
+        localStorage.removeItem('user')
+        localStorage.clear()
         window.location.href = '/login'
       }
     },
@@ -72,8 +75,7 @@ const Layout = (props) => {
                 <div className="flex items-center justify-between h-16">
                   <div className="flex items-center">
                     <a href="/" className="inline-flex items-center flex-shrink-0 space-x-2">
-                      <Logo className="w-8 h-8 text-white" />
-                      <span className="ml-4 text-xl font-bold tracking-tight text-white">Bidster</span>
+                      <Logo variant='light' />
                     </a>
                     <div className="hidden md:block">
                       <div className="flex items-baseline ml-10 space-x-4">
@@ -196,6 +198,18 @@ const Layout = (props) => {
         <main>
           {children}
         </main>
+        <footer>
+          <div className="px-4 py-8 mx-auto max-w-7xl sm:px-6 lg:px-8">
+            <div className="flex flex-col justify-center space-y-4 lg:flex-row lg:space-y-0">
+              <div className="flex flex-col space-y-4">
+                <div className="flex items-center justify-center space-x-2">
+                  <Logo variant='dark' />
+                </div>
+                <p className="text-base text-center text-gray-500">© {moment().year()} Bidster, Inc. All rights reserved.</p>
+              </div>
+            </div>
+          </div>
+        </footer>
       </div>
     </>
   )

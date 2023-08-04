@@ -815,3 +815,51 @@ class MapListingViewSet(APIView):
             listings, many=True, context={"request": request}
         )
         return Response(serializer.data)
+
+
+class UserListingViewSet(APIView):
+    """
+    This viewset handles the following endpoint:
+
+    - GET /users/<int:pk>/listings
+
+    GET /users/<int:pk>/listings
+    ----------------------------
+
+    This endpoint returns a list of listings for a user. The listings can be
+    filtered by the following query parameters:
+
+    - filter: active, closed, all (default: active)
+    - query: search query (default: None)
+    - page: page number (default: 1)
+    - limit: number of listings per page (default: 8)
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, pk):
+        """
+        This method handles the GET /users/<int:pk>/listings endpoint.
+
+        Returns a list of listings for a user.
+        """
+        user = User.objects.get(id=pk)
+        listings = Listing.objects.filter(user=user)
+        listing_filter = request.query_params.get("filter", "active")
+        query = request.query_params.get("query", None)
+        listings = filter_objects(request, listings, listing_filter, query)
+        page = request.query_params.get("page", 1)
+        limit = request.query_params.get("limit", 8)
+        paginator = Paginator(listings, limit)
+        listings = paginator.page(page)
+        serializer = ListingSerializer(
+            listings, many=True, context={"request": request}
+        )
+        return Response(
+            {
+                "count": paginator.count,
+                "num_pages": paginator.num_pages,
+                "results": serializer.data,
+                "user": user.get_display_name(),
+            }
+        )

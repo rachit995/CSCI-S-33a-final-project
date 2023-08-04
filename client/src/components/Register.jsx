@@ -1,28 +1,30 @@
-import Layout from "./Layout"
 import Logo from "./Logo"
 import { useForm } from "react-hook-form";
-import { redirect, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import Input from "./html/Input";
 import api from "../utils/api";
-import Alert from "./html/Alert";
 import { useEffect, useState } from "react";
 import { toast } from "../utils/helper";
+import { BiLoaderAlt } from "react-icons/bi";
 
 const Register = () => {
   const navigate = useNavigate();
+  const [submitLoading, setSubmitLoading] = useState(false)
   const { register, handleSubmit, watch, formState: { errors } } = useForm();
   const onSubmit = data => {
+    setSubmitLoading(true)
     api.post('/register', data)
       .then((res) => {
         toast('success', 'Account created successfully, redirecting to login')
         if (res.status === 200) {
           setTimeout(() => {
             return navigate('/login');
-          }, 2000);
+          }, 1000);
         }
       })
       .catch(err => {
         toast('error', err.response.data.error)
+        setSubmitLoading(false)
       })
   };
   useEffect(() => {
@@ -35,7 +37,7 @@ const Register = () => {
     <div className="flex flex-col justify-center flex-1 min-h-full px-6 py-12 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-sm">
         <div className='inline-flex justify-center w-full'>
-          <Logo className='w-10 h-10' />
+          <Logo variant='dark' text={false} />
         </div>
         <h2 className="mt-4 text-2xl font-bold leading-9 tracking-tight text-center text-gray-900">
           Register for an Bidster account
@@ -55,6 +57,7 @@ const Register = () => {
             registerOptions={{ required: true, maxLength: 20 }}
             placeholder="Eg. john.doe"
             error={errors.username}
+            disabled={submitLoading}
           />
 
           <Input
@@ -68,6 +71,7 @@ const Register = () => {
             registerOptions={{ required: true, pattern: /^\S+@\S+$/i }}
             placeholder="Eg. john.doe@email.com"
             error={errors.email}
+            disabled={submitLoading}
           />
 
           <Input
@@ -87,6 +91,7 @@ const Register = () => {
             }}
             placeholder="Eg. ********"
             error={errors.password}
+            disabled={submitLoading}
           />
 
           <Input
@@ -103,14 +108,21 @@ const Register = () => {
               validate: value => value === watch('password') || "The passwords do not match"
             }}
             error={errors.confirmPassword}
+            disabled={submitLoading}
           />
 
           <div>
             <button
               type="submit"
-              className="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+              className="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-40"
+              disabled={submitLoading}
             >
-              Sign in
+              {
+                submitLoading ? (
+                  <BiLoaderAlt className="inline-block mr-2 animate-spin" />
+                ) : null
+              }
+              <span>Register</span>
             </button>
           </div>
         </form>
